@@ -95,3 +95,11 @@ int sys_hello(void)
   print_hello();
   return 0;
 }
+
+int sys_info(void)
+{
+  int param;
+  argint(0, &param);
+  info(param);
+  return 0;
+}

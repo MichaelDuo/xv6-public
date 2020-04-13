@@ -537,3 +537,36 @@ void print_hello(void)
 {
   cprintf("Hello from the kernel space\n");
 }
+
+void info(int mode){
+  acquire(&ptable.lock);
+  if(mode==1){
+    // total process number
+    struct proc *p;
+    int count = 0;
+    for(p=ptable.proc; p<&ptable.proc[NPROC]; p++){
+      if(p->state != UNUSED){
+        count++;
+      }
+    }
+    cprintf("Total process is %d\n", count);
+  }
+  if(mode==2){
+    // total system call the process made
+    struct proc *curproc = myproc();
+    cprintf("Total system call is %d\n", curproc->syscallcount);
+  }
+  if(mode==3){
+    // number of memory pages the current process is using 
+    struct proc *curproc = myproc();
+    int count = 0;
+    int i;
+    for(i=0; i<curproc->sz; i+=sizeof(pde_t)){
+      if(curproc->pgdir[i] & PTE_P){
+        count++;
+      }
+    }
+    cprintf("Total page using: %d\n", count);
+  }
+  release(&ptable.lock);
+}
