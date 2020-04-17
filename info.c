@@ -10,7 +10,7 @@ int main(int argc, char * argv[])
         printf(1, "Unsupported params, please select mode, 1, 2, 3\n");
     } else {
         int mode = atoi(argv[1]);
-        printf(1, "Using mode %d\n", mode);
+        // printf(1, "Using mode %d\n", mode);
         info(mode);
     }
 

@@ -140,7 +140,7 @@ syscall(void)
 
   num = curproc->tf->eax; // will save syscall number to eax
   if(num > 0 && num < NELEM(syscalls) && syscalls[num]) {
-    curproc->syscallcount = curproc->syscallcount + 1;
+    curproc->syscallcount++;
     curproc->tf->eax = syscalls[num](); // save the result back?
   } else {
     cprintf("%d %s: unknown sys call %d\n",

@@ -88,6 +88,7 @@ allocproc(void)
 found:
   p->state = EMBRYO;
   p->pid = nextpid++;
+  p->syscallcount = 0;
 
   release(&ptable.lock);
 
@@ -559,14 +560,7 @@ void info(int mode){
   if(mode==3){
     // number of memory pages the current process is using 
     struct proc *curproc = myproc();
-    int count = 0;
-    int i;
-    for(i=0; i<curproc->sz; i+=sizeof(pde_t)){
-      if(curproc->pgdir[i] & PTE_P){
-        count++;
-      }
-    }
-    cprintf("Total page using: %d\n", count);
+    cprintf("Total page using: %d\n", curproc->sz / PGSIZE);
   }
   release(&ptable.lock);
 }
