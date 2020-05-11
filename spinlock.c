@@ -107,7 +107,7 @@ pushcli(void)
   int eflags;
 
   eflags = readeflags();
-  cli();
+  cli(); // disable inturrupt, https://c9x.me/x86/html/file_module_x86_id_31.html
   if(mycpu()->ncli == 0)
     mycpu()->intena = eflags & FL_IF;
   mycpu()->ncli += 1;
