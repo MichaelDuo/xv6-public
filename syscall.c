@@ -105,6 +105,7 @@ extern int sys_write(void);
 extern int sys_uptime(void);
 extern int sys_hello(void);
 extern int sys_info(void);
+extern int sys_ticketset(void);
 
 static int (*syscalls[])(void) = {
 [SYS_fork]    sys_fork,
@@ -129,16 +130,17 @@ static int (*syscalls[])(void) = {
 [SYS_mkdir]   sys_mkdir,
 [SYS_close]   sys_close,
 [SYS_hello]   sys_hello,
-[SYS_info]    sys_info
+[SYS_info]    sys_info,
+[SYS_ticketset] sys_ticketset,
 };
 
 void
 syscall(void)
 {
   int num;
-  struct proc *curproc = myproc(); // what is this? getting current process?
+  struct proc *curproc = myproc();
 
-  num = curproc->tf->eax; // will save syscall number to eax
+  num = curproc->tf->eax;
   if(num > 0 && num < NELEM(syscalls) && syscalls[num]) {
     curproc->syscallcount++;
     curproc->tf->eax = syscalls[num](); // save the result back?

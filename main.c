@@ -54,8 +54,18 @@ mpmain(void)
   cprintf("cpu%d: starting %d\n", cpuid(), cpuid());
   idtinit();       // load idt register
   xchg(&(mycpu()->started), 1); // tell startothers() we're up
-  // scheduler();     // start running processes
+  #ifdef LOTTERY
+  cprintf("Running lottery scheduler\n");
   lottery_scheduler();
+  #elif STRIDE
+  cprintf("Running stride scheduler\n");
+  stride_scheduler();
+  #else
+  cprintf("Running RB scheduler\n");
+  scheduler();
+  #endif
+  // scheduler();     // start running processes
+  // lottery_scheduler();
   // stride_scheduler();
 }
 

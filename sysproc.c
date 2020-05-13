@@ -103,3 +103,11 @@ int sys_info(void)
   info(param);
   return 0;
 }
+
+int sys_ticketset(void)
+{
+  int param;
+  argint(0, &param);
+  ticketset(param);
+  return 0;
+}

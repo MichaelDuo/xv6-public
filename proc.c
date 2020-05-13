@@ -89,6 +89,8 @@ found:
   p->state = EMBRYO;
   p->pid = nextpid++;
   p->syscallcount = 0;
+  p->ticket = 1;
+  p->stride = 1;
 
   release(&ptable.lock);
 
@@ -356,6 +358,7 @@ scheduler(void)
   }
 }
 
+// prog 10&; prog 20&; prog 30&;
 void
 lottery_scheduler(void){
   struct proc *p;
@@ -368,26 +371,36 @@ lottery_scheduler(void){
 
     // Loop over process table looking for process to run.
     acquire(&ptable.lock);
-    for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
-      if(p->state != RUNNABLE)
-        continue;
+    int total_ticket = 0;
+    for(p=ptable.proc; p < &ptable.proc[NPROC]; p++){
+      if(p->state == RUNNABLE) total_ticket+=p->ticket;
+    }
+    if(total_ticket!=0){
+      int l = random_range(0, total_ticket);
+      int sum = 0;
+      for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
+        if(p->state != RUNNABLE)
+          continue;
+        sum += p->ticket;
+        if(sum >= l){
+          // Switch to chosen process.  It is the process's job
+          // to release ptable.lock and then reacquire it
+          // before jumping back to us.
+          c->proc = p;
+          switchuvm(p);
+          p->state = RUNNING;
 
-      // Switch to chosen process.  It is the process's job
-      // to release ptable.lock and then reacquire it
-      // before jumping back to us.
-      c->proc = p;
-      switchuvm(p);
-      p->state = RUNNING;
+          swtch(&(c->scheduler), p->context);
+          switchkvm();
 
-      swtch(&(c->scheduler), p->context);
-      switchkvm();
-
-      // Process is done running for now.
-      // It should have changed its p->state before coming back.
-      c->proc = 0;
+          // Process is done running for now.
+          // It should have changed its p->state before coming back.
+          c->proc = 0;
+          break;
+        }
+      }
     }
     release(&ptable.lock);
-
   }
 }
 
@@ -632,4 +645,11 @@ void info(int mode){
     cprintf("Total page using: %d\n", curproc->sz / PGSIZE);
   }
   release(&ptable.lock);
+}
+
+void ticketset(int ticket){
+  struct proc *curproc = myproc();
+  cprintf("Current ticket is: %d\n", curproc->ticket);
+  curproc->ticket = ticket;
+  cprintf("Changed ticket to: %d\n", curproc->ticket);
 }
