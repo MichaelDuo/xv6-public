@@ -53,6 +53,7 @@ struct proc {
   int ticket;                  // lottery ticket
   int stride;
   int stridepass;              // stide number
+  int quota;
 };
 
 // Process memory is laid out contiguously, low addresses first:

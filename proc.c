@@ -21,6 +21,7 @@ extern void trapret(void);
 static void wakeup1(void *chan);
 
 const int stride1 = 600;
+int quota = 0;
 
 void
 pinit(void)
@@ -94,6 +95,7 @@ found:
   p->ticket = 1;
   p->stride = stride1/p->ticket;
   p->stridepass = p->stride;
+  p->quota = 0;
 
   release(&ptable.lock);
 
@@ -393,7 +395,12 @@ lottery_scheduler(void){
           switchuvm(p);
           p->state = RUNNING;
 
+          p->quota++;
+          if(quota % 5==0)
+            cprintf("system quota: %d, ticket: %d, cumulative quota: %d\n", quota, p->ticket, p->quota);
+
           swtch(&(c->scheduler), p->context);
+
           switchkvm();
 
           // Process is done running for now.
@@ -439,7 +446,12 @@ stride_scheduler(void){
       switchuvm(cand_p);
       cand_p->state = RUNNING;
 
+      cand_p->quota++;
+      if(quota % 5==0)
+        cprintf("system quota: %d, ticket: %d, cumulative quota: %d\n", quota, cand_p->ticket, cand_p->quota);
+
       swtch(&(c->scheduler), cand_p->context);
+
       switchkvm();
 
       // Process is done running for now.
@@ -462,6 +474,7 @@ stride_scheduler(void){
 void
 sched(void)
 {
+  quota++;
   int intena;
   struct proc *p = myproc();
   if(!holding(&ptable.lock))
