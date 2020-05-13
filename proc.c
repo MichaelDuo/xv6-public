@@ -20,6 +20,8 @@ extern void trapret(void);
 
 static void wakeup1(void *chan);
 
+const int stride1 = 600;
+
 void
 pinit(void)
 {
@@ -90,7 +92,8 @@ found:
   p->pid = nextpid++;
   p->syscallcount = 0;
   p->ticket = 1;
-  p->stride = 1;
+  p->stride = stride1/p->ticket;
+  p->stridepass = p->stride;
 
   release(&ptable.lock);
 
@@ -416,26 +419,36 @@ stride_scheduler(void){
 
     // Loop over process table looking for process to run.
     acquire(&ptable.lock);
-    for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
-      if(p->state != RUNNABLE)
-        continue;
 
+    int min_stridepass = -1;
+    struct proc *cand_p = 0;
+    for(p=ptable.proc; p < &ptable.proc[NPROC]; p++){
+      if(p->state == RUNNABLE){
+        if(p->stridepass<=min_stridepass || min_stridepass==-1){
+          cand_p = p;
+          min_stridepass = p->stridepass;
+        }
+      }
+    }
+
+    if(cand_p){
       // Switch to chosen process.  It is the process's job
       // to release ptable.lock and then reacquire it
       // before jumping back to us.
-      c->proc = p;
-      switchuvm(p);
-      p->state = RUNNING;
+      c->proc = cand_p;
+      switchuvm(cand_p);
+      cand_p->state = RUNNING;
 
-      swtch(&(c->scheduler), p->context);
+      swtch(&(c->scheduler), cand_p->context);
       switchkvm();
 
       // Process is done running for now.
       // It should have changed its p->state before coming back.
       c->proc = 0;
+      cand_p->stridepass += cand_p->stride;
     }
-    release(&ptable.lock);
 
+    release(&ptable.lock);
   }
 }
 
@@ -649,7 +662,7 @@ void info(int mode){
 
 void ticketset(int ticket){
   struct proc *curproc = myproc();
-  cprintf("Current ticket is: %d\n", curproc->ticket);
   curproc->ticket = ticket;
-  cprintf("Changed ticket to: %d\n", curproc->ticket);
+  curproc->stride = stride1/curproc->ticket;
+  curproc->stridepass = curproc->stride;
 }
