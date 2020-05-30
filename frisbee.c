@@ -53,7 +53,7 @@ void play(int players, int passes){
     for(i=0; i<players; i++){
         wait();
     }
-    printf(1, "Simulation of Frisbee game has finished, 6 rounds were played in total!\n");
+    printf(1, "Simulation of Frisbee game has finished, %d rounds were played in total!\n", rounds);
     exit();
 }
 
