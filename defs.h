@@ -125,6 +125,7 @@ void            yield(void);
 void            print_hello(void);
 void            info(int);
 void            ticketset(int);
+int             clone(void*, int);
 
 // swtch.S
 void            swtch(struct context**, struct context*);

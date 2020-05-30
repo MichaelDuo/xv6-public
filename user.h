@@ -26,6 +26,7 @@ int uptime(void);
 int hello(void);
 int info(int);
 int ticketset(int);
+int clone(void*, int);
 
 // ulib.c
 int stat(const char*, struct stat*);

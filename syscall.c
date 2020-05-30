@@ -106,6 +106,7 @@ extern int sys_uptime(void);
 extern int sys_hello(void);
 extern int sys_info(void);
 extern int sys_ticketset(void);
+extern int sys_clone(void);
 
 static int (*syscalls[])(void) = {
 [SYS_fork]    sys_fork,
@@ -131,7 +132,7 @@ static int (*syscalls[])(void) = {
 [SYS_close]   sys_close,
 [SYS_hello]   sys_hello,
 [SYS_info]    sys_info,
-[SYS_ticketset] sys_ticketset,
+[SYS_clone]   sys_clone,
 };
 
 void

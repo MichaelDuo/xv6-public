@@ -111,3 +111,9 @@ int sys_ticketset(void)
   ticketset(param);
   return 0;
 }
+
+int sys_clone(void)
+{
+  clone(0, 1);
+  return 0;
+}
