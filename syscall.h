@@ -22,5 +22,7 @@
 #define SYS_close  21
 #define SYS_hello  22
 #define SYS_info   23
-#define SYS_ticketset   24
-// #define SYS_
+#define SYS_ticketset     24
+#define SYS_thread_create 25
+#define SYS_lock_aquire   26
+#define SYS_lock_release  27

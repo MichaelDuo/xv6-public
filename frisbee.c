@@ -1,6 +1,7 @@
 #include "types.h"
 #include "stat.h"
 #include "user.h"
+#include "threadlib.h"
 
 struct player_args {
     int t_id;
@@ -25,8 +26,7 @@ void play(int players, int passes){
         args->passes = passes;
         args->next = &token;
         args->total_player = &players;
-        // TODO: create threads
-        player(args);
+        thread_create(player, args);
     }
     for(i=0; i<players; i++){
         // TODO: wait threads
