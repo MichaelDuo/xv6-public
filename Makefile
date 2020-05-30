@@ -187,6 +187,7 @@ UPROGS=\
 	_test\
 	_info\
 	_prog\
+	_frisbee\
 
 fs.img: mkfs README $(UPROGS)
 	./mkfs fs.img README $(UPROGS)
