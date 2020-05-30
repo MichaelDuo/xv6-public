@@ -1,13 +1,19 @@
 #include "types.h"
-// #include "stat.h"
-// #include "fcntl.h"
 #include "user.h"
 #include "x86.h"
 #include "threadlib.h"
 
 void thread_create(void *(*routine)(void*), void *arg){
-    // (*routine)(arg);
-    clone(0, 0);
+    void *stack = malloc(PGSIZE*2);
+    if((uint)stack % PGSIZE)
+        stack = stack + (PGSIZE - (uint)stack % PGSIZE);
+    int id;
+    id = clone(stack, PGSIZE*2);
+    if(id==0){
+        (*routine)(arg);
+        free(stack);
+        exit();
+    }
 }
 
 void lock_init(struct lock_t *lk){

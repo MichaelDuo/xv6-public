@@ -96,6 +96,8 @@ found:
   p->stride = stride1/p->ticket;
   p->stridepass = p->stride;
   p->quota = 0;
+  p->num_thread = 0;
+  p->is_thread = 0;
 
   release(&ptable.lock);
 
@@ -232,8 +234,49 @@ fork(void)
 int
 clone(void* stack, int size)
 {
-  cprintf("Clone\n");
-  return -1;
+  int i, pid;
+  struct proc *np;
+  struct proc *curproc = myproc();
+
+  // Allocate process.
+  if((np = allocproc()) == 0){
+    return -1;
+  }
+
+  np->pgdir = curproc->pgdir;
+  curproc->num_thread+=1;
+  np->is_thread = 1;
+  np->sz = curproc->sz;
+  np->parent = curproc;
+  *np->tf = *curproc->tf;
+
+  void *startCopy = (void*)curproc->tf->ebp+16;
+  void *endCopy = (void*)curproc->tf->esp;
+  uint copySize = (uint)(startCopy - endCopy);
+
+  np->tf->esp = (uint)(stack + PGSIZE - copySize);
+  np->tf->ebp = (uint)(stack + PGSIZE-16);
+  memmove(stack + PGSIZE - copySize, endCopy, copySize);
+
+  // Clear %eax so that fork returns 0 in the child.
+  np->tf->eax = 0;
+
+  for(i = 0; i < NOFILE; i++)
+    if(curproc->ofile[i])
+      np->ofile[i] = filedup(curproc->ofile[i]);
+  np->cwd = idup(curproc->cwd);
+
+  safestrcpy(np->name, curproc->name, sizeof(curproc->name));
+
+  pid = np->pid;
+
+  acquire(&ptable.lock);
+
+  np->state = RUNNABLE;
+
+  release(&ptable.lock);
+
+  return pid;
 }
 
 // Exit the current process.  Does not return.
@@ -245,17 +288,50 @@ exit(void)
   struct proc *curproc = myproc();
   struct proc *p;
   int fd;
+  struct proc *pp = curproc->parent;
 
   if(curproc == initproc)
     panic("init exiting");
 
-  // Close all open files.
-  for(fd = 0; fd < NOFILE; fd++){
-    if(curproc->ofile[fd]){
-      fileclose(curproc->ofile[fd]);
-      curproc->ofile[fd] = 0;
+    // Close all open files.
+  if(curproc->is_thread ==1)
+  {
+    if((pp->num_thread ==1)&&(pp->state== ZOMBIE))
+    {
+      for(fd = 0; fd < NOFILE; fd++)
+      {
+        if(curproc->ofile[fd])
+        {
+          fileclose(curproc->ofile[fd]);
+          curproc->ofile[fd] = 0;
+        }
+      }
+    }
+  } else {
+    if(curproc->num_thread==0)
+    {
+      for(fd = 0; fd < NOFILE; fd++)
+      {
+        if(curproc->ofile[fd])
+        {
+          fileclose(curproc->ofile[fd]);
+          curproc->ofile[fd] = 0;
+        }
+      }
     }
   }
+  if(curproc->is_thread==1)
+  {
+    pp->num_thread-=1;
+  }
+
+  // // Close all open files.
+  // for(fd = 0; fd < NOFILE; fd++){
+  //   if(curproc->ofile[fd]){
+  //     fileclose(curproc->ofile[fd]);
+  //     curproc->ofile[fd] = 0;
+  //   }
+  // }
 
   begin_op();
   iput(curproc->cwd);
@@ -304,7 +380,11 @@ wait(void)
         pid = p->pid;
         kfree(p->kstack);
         p->kstack = 0;
-        freevm(p->pgdir);
+        if(p->pgdir!=curproc->pgdir)
+        {
+          freevm(p->pgdir);
+        }
+        // freevm(p->pgdir);
         p->pid = 0;
         p->parent = 0;
         p->name[0] = 0;

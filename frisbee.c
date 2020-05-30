@@ -8,29 +8,54 @@ struct player_args {
     int passes;
     int *next;
     int *total_player;
+    int *rounds;
+    struct lock_t *lock;
 };
 
 void *player(void *input){
     struct player_args *args = (struct player_args*) input;
-    printf(1, "t_id: %d\n", args->t_id);
+    while(1){
+        lock_acquire(args->lock);
+        if(*(args->rounds)<=0){
+            lock_release(args->lock);
+            break;
+        }
+        if(*(args->next)==args->t_id){
+            printf(1, "Pass to next from: t_id: %d, rounds: %d\n", args->t_id, *(args->rounds));
+            *(args->next) = (*(args->next)+1) % *(args->total_player);
+            *(args->rounds) = *(args->rounds) - 1;
+        } else {
+            lock_release(args->lock);
+        }
+        lock_release(args->lock);
+        sleep(100);
+    }
     return 0;
 }
 
 void play(int players, int passes){
     int i;
     int token = 0;
-    // TODO: init lock
+    int rounds = passes;
+    struct lock_t lock;
+    lock_init(&lock);
+
     for(i=0; i<players; i++){
         struct player_args *args = (struct player_args *)malloc(sizeof(struct player_args));
         args->t_id = i;
         args->passes = passes;
         args->next = &token;
         args->total_player = &players;
+        args->rounds = &rounds;
+        args->lock = &lock;
+
         thread_create(player, args);
     }
     for(i=0; i<players; i++){
         // TODO: wait threads
+        wait();
     }
+    exit();
 }
 
 int main(int argc, char * argv[])

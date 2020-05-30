@@ -114,6 +114,9 @@ int sys_ticketset(void)
 
 int sys_clone(void)
 {
-  clone(0, 1);
-  return 0;
+  int stack;
+  int size;
+  argint(0, &stack);
+  argint(1, &size); 
+  return clone((void *)stack, size);
 }

@@ -54,6 +54,8 @@ struct proc {
   int stride;
   int stridepass;              // stide number
   int quota;
+  int num_thread;
+  int is_thread;
 };
 
 // Process memory is laid out contiguously, low addresses first:
