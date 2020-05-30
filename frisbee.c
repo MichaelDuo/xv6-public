@@ -16,19 +16,18 @@ void *player(void *input){
     struct player_args *args = (struct player_args*) input;
     while(1){
         lock_acquire(args->lock);
-        if(*(args->rounds)<=0){
+        if(*(args->rounds)>=args->passes){
             lock_release(args->lock);
             break;
         }
         if(*(args->next)==args->t_id){
-            printf(1, "Pass to next from: t_id: %d, rounds: %d\n", args->t_id, *(args->rounds));
             *(args->next) = (*(args->next)+1) % *(args->total_player);
-            *(args->rounds) = *(args->rounds) - 1;
+            *(args->rounds) += 1;
+            printf(1, "Pass number %d, thread %d is passing the token to thread %d\n", *(args->rounds), args->t_id, *(args->next));
         } else {
             lock_release(args->lock);
         }
         lock_release(args->lock);
-        sleep(100);
     }
     return 0;
 }
@@ -36,7 +35,7 @@ void *player(void *input){
 void play(int players, int passes){
     int i;
     int token = 0;
-    int rounds = passes;
+    int rounds = 0;
     struct lock_t lock;
     lock_init(&lock);
 
@@ -52,9 +51,9 @@ void play(int players, int passes){
         thread_create(player, args);
     }
     for(i=0; i<players; i++){
-        // TODO: wait threads
         wait();
     }
+    printf(1, "Simulation of Frisbee game has finished, 6 rounds were played in total!\n");
     exit();
 }
 
